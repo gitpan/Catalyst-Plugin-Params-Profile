@@ -4,6 +4,7 @@
 Catalyst::Plugin::Params::Profile - Parameter checking with Params::Profile
 
 =head1 SYNOPSIS
+
     package MyAPP;
     use Catalyst qw/Params::Profile/;
 
@@ -26,6 +27,9 @@ Catalyst::Plugin::Params::Profile - Parameter checking with Params::Profile
         my (%params) = @_;
 
         return unlesss $c->validate('params' => \%params);
+        ### OR
+        my %opts = $c->check_params or return;
+
         ### DO SOME STUFF HERE ...
 
         my $profile = $c->get_profile('method' => 'subroto');
@@ -75,7 +79,7 @@ are just an interface on it.
 =head1 Public Methods
 
 See C<Params::Profile> for more information about the specific methods,
-the onse listed below are the most important
+the onse listed below are the most important.
 
 =over 4
 
@@ -88,6 +92,35 @@ the onse listed below are the most important
 =item $c->check('params' =>  \%PARAMS);
 
 =back
+
+=head2 $c->check_params;
+
+Checks $c->req->params against the profile of the calling sub. It returns
+a HASHREF containing validate parameters, or undef on failure. It will also
+log to Catalyst::Log about what happened.
+
+Extra options to this sub are:
+
+=over 4
+
+=item params OPTIONAL
+
+Validate against params instead of $c->req->params
+
+=item profile OPTIONAL
+
+Validate against profile instead of profile of calling sub
+
+=item allow_unknown OPTIONAL
+
+Pass the unknown parameters to the return HREF rather than filtering them out.
+
+=item dv OPTIONAL
+
+Instead of returning a hashref containing validated params, return the
+Data::FormValidator::Results object.
+
+NOTE: Only tested with Data::FormValidator yet!!
 
 =head1 XMLRPC
 
@@ -116,9 +149,8 @@ NOTE: This currently only works for Data::FormValidator profiles.
     use strict;
     use warnings;
     use Data::Dumper;
-    use Params::Profile;
 
-    our $VERSION = '0.02';
+    our $VERSION = '0.04';
 
     use base qw/Params::Profile/;
 
@@ -252,6 +284,67 @@ NOTE: This currently only works for Data::FormValidator profiles.
         }
 
         return $txt;
+    }
+
+    sub check_params {
+        my ($c, %args) = @_;
+        my (%ok_params);
+        ### Extra option: allow_unknown
+        ### allow_unknown: do not filter out parameters we do not know
+
+        ### Get options
+        my %params = $args{params} || %{ $c->req->params };
+
+        ### Get caller
+        my $caller_sub = $args{method} || [caller(1)]->[3];
+
+        local $Params::Check::VERBOSE = undef;
+        local $Params::Check::ALLOW_UNKNOWN = 1 if $args{allow_unknown};
+
+        my $result = $c->check(
+                method  => $caller_sub,
+                params  => \%params,
+            );
+
+        if (
+            UNIVERSAL::isa($result, 'Data::FormValidator::Results')
+        ) {
+            my $dv = $result;
+
+            ### Go into error when parameters validate AND
+            ### we have no unknown params or pass_unknown is 1
+            unless ($dv->success) {
+                my $errmsg = "Problems validating profile:";
+                ### Go log something
+                $errmsg .= "\n        Missing params:\n        * " .
+                            join("\n        * ", $dv->missing)
+                            if $dv->has_missing;
+                $errmsg .= "\n        Invalid params:\n        * " .
+                            join("\n        * ", $dv->invalid)
+                            if $dv->has_invalid;
+                $errmsg .= "\n        Unknown params:\n        * " .
+                            join("\n        * ", $dv->unknown)
+                            if $dv->has_unknown;
+                $c->log->debug($errmsg);
+                return;
+            }
+
+            return $dv if $args{dv};
+
+            ### Force dv->valid to return as href
+            my $href = $dv->valid;
+
+            ### Return all params or only validated ones.
+            return $args{allow_unknown} ? \%params : $href;
+        } else {
+            if (my $errmsg = Params::Check::last_error()) {
+                $c->log->debug("Problems validating profile:\n" .
+                        Params::Check::last_error());
+            }
+            return $result;
+        }
+
+        return;
     }
 }
 
