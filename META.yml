@@ -1,13 +1,23 @@
-# http://module-build.sourceforge.net/META-spec.html
-#XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
-name:         Catalyst-Plugin-Params-Profile
-version:      0.04
-version_from: lib/Catalyst/Plugin/Params/Profile.pm
-installdirs:  site
+--- #YAML:1.0
+name:               Catalyst-Plugin-Params-Profile
+version:            0.05
+abstract:           ~
+author:  []
+license:            unknown
+distribution_type:  module
+configure_requires:
+    ExtUtils::MakeMaker:  0
+build_requires:
+    ExtUtils::MakeMaker:  0
 requires:
-    Catalyst:                      5.66
-    Params::Profile:               0.10
-    Test::More:                    0.62
-
-distribution_type: module
-generated_by: ExtUtils::MakeMaker version 6.30
+    Catalyst:         5.66
+    Params::Profile:  0.10
+    Test::More:       0.62
+no_index:
+    directory:
+        - t
+        - inc
+generated_by:       ExtUtils::MakeMaker version 6.57_05
+meta-spec:
+    url:      http://module-build.sourceforge.net/META-spec-v1.4.html
+    version:  1.4

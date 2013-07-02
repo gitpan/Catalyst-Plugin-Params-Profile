@@ -122,6 +122,8 @@ Data::FormValidator::Results object.
 
 NOTE: Only tested with Data::FormValidator yet!!
 
+=back
+
 =head1 XMLRPC
 
 This module also registers a method name called C<system.methodHelp> into
@@ -148,9 +150,12 @@ NOTE: This currently only works for Data::FormValidator profiles.
 
     use strict;
     use warnings;
-    use Data::Dumper;
 
-    our $VERSION = '0.04';
+    use Catalyst::ActionContainer;
+    use Tree::Simple;
+    use Class::C3;
+
+    our $VERSION = '0.05';
 
     use base qw/Params::Profile/;
 
@@ -173,7 +178,7 @@ NOTE: This currently only works for Data::FormValidator profiles.
     ### the Server::XMLRPC module when this module is available.
     sub setup_actions {
         my $c = shift;
-        $c->NEXT::setup_actions( @_ );
+        $c->next::method( @_ );
 
         ### Generate nice table containing Params::Profile specific
         ### information
@@ -202,24 +207,25 @@ NOTE: This currently only works for Data::FormValidator profiles.
         my ($c) = @_;
         my $actions = {};
 
-        my $walker = sub {
-            my ( $walker, $parent, $prefix ) = @_;
-            $prefix .= $parent->getNodeValue || '';
-            $prefix .= '/' unless $prefix =~ /\/$/;
-            my $node = $parent->getNodeValue->actions;
+        for my $controller ($c->controllers) {
+            my @containers = $c->dispatcher->get_containers($c->controller($controller)->action_namespace);
 
-            for my $action ( keys %{$node} ) {
-                next if $action =~ /^_.*/;
-                my $action_obj = $node->{$action};
-                $actions->{
-                        $action_obj->class . '::' . $action_obj->name
-                    } = $action_obj;
+            for my $container (@containers) {
+                my $container_actions     = $container->actions;
+
+                for my $action ( keys %{ $container_actions } ) {
+                    next if $action =~ /^_.*/;
+
+                    my $action_obj  = $container_actions->{$action};
+
+                    $actions->{
+                            $action_obj->class . '::' . $action_obj->name
+                        } = $action_obj;
+                }
             }
-            $walker->( $walker, $_, $prefix ) for $parent->getAllChildren;
-        };
-        $walker->( $walker, $c->dispatcher->tree, '' );
+        }
 
-        return 1 if keys %{$actions} < 1;
+        return 1 if scalar(keys %{ $actions }) < 1;
 
         { # Table creation
             my $nogotable = Text::SimpleTable->new(
@@ -325,7 +331,7 @@ NOTE: This currently only works for Data::FormValidator profiles.
                 $errmsg .= "\n        Unknown params:\n        * " .
                             join("\n        * ", $dv->unknown)
                             if $dv->has_unknown;
-                $c->log->debug($errmsg);
+                $c->log->debug($errmsg) if $c->debug;
                 return;
             }
 
@@ -339,7 +345,7 @@ NOTE: This currently only works for Data::FormValidator profiles.
         } else {
             if (my $errmsg = Params::Check::last_error()) {
                 $c->log->debug("Problems validating profile:\n" .
-                        Params::Check::last_error());
+                        Params::Check::last_error()) if $c->debug;
             }
             return $result;
         }
@@ -354,7 +360,6 @@ __END__
 
 =head1 AUTHOR
 
-This module by
 Michiel Ootjers E<lt>michiel@cpan.orgE<gt>.
 
 and
@@ -377,10 +382,15 @@ C<Data::FormValidator>
 Please submit all bugs regarding C<Catalyst::Plugin::Params::Profile> to
 C<bug-catalyst-plugin-params-profile@rt.cpan.org>
 
+=head1 SOURCE
+
+Please send your improvements as pull request via bitbucket.org to
+C<https://bitbucket.org/michielootjers/catalyst-plugin-params-profile>
+
 =head1 COPYRIGHT
 
 This module is
-copyright (c) 2002 Michiel Ootjers E<lt>michiel@cpan.orgE<gt>.
+copyright (c) 2002-2013 Michiel Ootjers E<lt>michiel@cpan.orgE<gt>.
 All rights reserved.
 
 This library is free software;

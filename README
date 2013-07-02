@@ -33,6 +33,7 @@ SYNOPSIS
             my $profile = $c->get_profile('method' => 'subroto');
         }
 
+
         ### Multiple Profile
         MyAPP->register_profile(
                         'method'    => 'subalso',
@@ -50,6 +51,7 @@ SYNOPSIS
                                         },
                                     ],
                     );
+
 
         sub subalso : Local {
             my (%params) = @_;
@@ -104,45 +106,49 @@ Public Methods
         NOTE: Only tested with Data::FormValidator yet!!
 
 XMLRPC
-        This module also registers a method name called "system.methodHelp"
-        into the Server::XMLRPC plugin when it is loaded. This method will
-        try to explain in plaintext the arguments for the subroutine by
-        parsing the given profile.
+    This module also registers a method name called "system.methodHelp" into
+    the Server::XMLRPC plugin when it is loaded. This method will try to
+    explain in plaintext the arguments for the subroutine by parsing the
+    given profile.
 
-        Example output when system.methodHelp is called with one argument
-        containing the name of the method you'd like to be explained:
+    Example output when system.methodHelp is called with one argument
+    containing the name of the method you'd like to be explained:
 
-            Required arguments are:
-             * customer_id
-             * username
-             * product
+        Required arguments are:
+         * customer_id
+         * username
+         * product
 
-            Optional arguments are:
-             * roaming
-             * card_type
+        Optional arguments are:
+         * roaming
+         * card_type
 
-        NOTE: This currently only works for Data::FormValidator profiles.
+    NOTE: This currently only works for Data::FormValidator profiles.
 
 AUTHOR
-        This module by Michiel Ootjers <michiel@cpan.org>.
+    Michiel Ootjers <michiel@cpan.org>.
 
-        and
+    and
 
-        Jos Boumans <kane@cpan.org>.
+    Jos Boumans <kane@cpan.org>.
 
 TODO
-        profile explanation
-            Fix the profile explanation to explain profiles other than
-            "Data::FormValidator"
+    profile explanation
+        Fix the profile explanation to explain profiles other than
+        "Data::FormValidator"
 
 BUG REPORTS
-        Please submit all bugs regarding "Catalyst::Plugin::Params::Profile"
-        to "bug-catalyst-plugin-params-profile@rt.cpan.org"
+    Please submit all bugs regarding "Catalyst::Plugin::Params::Profile" to
+    "bug-catalyst-plugin-params-profile@rt.cpan.org"
+
+SOURCE
+    Please send your improvements as pull request via bitbucket.org to
+    "https://bitbucket.org/michielootjers/catalyst-plugin-params-profile"
 
 COPYRIGHT
-        This module is copyright (c) 2002 Michiel Ootjers
-        <michiel@cpan.org>. All rights reserved.
+    This module is copyright (c) 2002-2013 Michiel Ootjers
+    <michiel@cpan.org>. All rights reserved.
 
-        This library is free software; you may redistribute and/or modify it
-        under the same terms as Perl itself.
+    This library is free software; you may redistribute and/or modify it
+    under the same terms as Perl itself.
 
